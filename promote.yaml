@@ -1,0 +1,54 @@
+---
+- name: Set up Windows Server as Domain Controller
+  hosts: dc
+  gather_facts: yes
+  tasks:
+
+    - name: Install AD Domain Services role
+      win_feature:
+        name: AD-Domain-Services
+        state: present
+
+    - name: Install DNS role (if needed)
+      win_feature:
+        name: DNS
+        state: present
+
+    - name: Create a new Active Directory forest
+      win_command: |
+        Install-ADDSForest `
+        -DomainName "orange.local" `
+        -DomainNetbiosName "ORANGE" `
+        -ForestMode "Win2016" `
+        -DomainMode "Win2016" `
+        -InstallDNS:$true `
+        -SafeModeAdministratorPassword (ConvertTo-SecureString "SafeModePassword123!" -AsPlainText -Force) `
+        -NoRebootOnCompletion:$true
+      register: result
+      become: yes
+      become_user: SYSTEM
+      ignore_errors: yes
+
+    - name: Reboot the server to complete AD DS setup
+      win_reboot:
+        msg: "Rebooting to complete Domain Controller promotion"
+        reboot_timeout: 600
+        test_command: hostname
+      when: result.rc == 0
+      become: yes
+
+    - name: Ensure server is part of the domain
+      win_domain_membership:
+        dns_domain_name: "orange.local"
+        domain_admin_user: "Administrator"
+        domain_admin_password: "YourAdminPassword"
+        state: domain
+      when: result.rc == 0
+
+    - name: Wait for Active Directory services to stabilize
+      wait_for:
+        host: "{{ ansible_host }}"
+        port: 389  # Default LDAP port
+        state: started
+        delay: 30
+        timeout: 600
