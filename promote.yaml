@@ -31,7 +31,6 @@
         msg: "Rebooting to complete Domain Controller promotion"
         reboot_timeout: 600
         test_command: hostname
-      when: result.rc == 0
       become: yes
 
     - name: Ensure server is part of the domain
@@ -40,7 +39,6 @@
         domain_admin_user: "Administrator"
         domain_admin_password: "YourAdminPassword"
         state: domain
-      when: result.rc == 0
 
     - name: Wait for Active Directory services to stabilize
       wait_for:
