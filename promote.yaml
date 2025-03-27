@@ -14,19 +14,16 @@
         name: DNS
         state: present
 
-    - name: Create a new Active Directory forest
-      win_command: |
-        Install-ADDSForest `
-        -DomainName "orange.local" `
-        -DomainNetbiosName "ORANGE" `
-        -ForestMode "Win2016" `
-        -DomainMode "Win2016" `
-        -InstallDNS:$true `
-        -SafeModeAdministratorPassword (ConvertTo-SecureString "SafeModePassword123!" -AsPlainText -Force) `
-        -NoRebootOnCompletion:$true
-      register: result
-      become: yes
-      ignore_errors: yes
+  - name: Promote server as a read only domain controller
+    microsoft.ad.domain_controller:
+      dns_domain_name: orange.local
+      domain_admin_user: adminuser@orange.local
+      domain_admin_password: Password123!
+      safe_mode_password: Password123!
+      state: domain_controller
+      read_only: false
+      site_name: London
+      reboot: true
 
     - name: Reboot the server to complete AD DS setup
       win_reboot:
