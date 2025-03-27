@@ -19,7 +19,7 @@
         create_dns_delegation: false
         database_path: C:\Windows\NTDS
         dns_domain_name: orange.local
-        domain_mode: Win2012R2
+        domain_mode: Win2025
         domain_netbios_name: orange
         forest_mode: Win2025
         safe_mode_password: Password123!
